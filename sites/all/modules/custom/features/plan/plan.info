@@ -4,6 +4,7 @@ core = 7.x
 package = PM
 version = 7.x-1.0
 dependencies[] = date
+dependencies[] = date_popup
 dependencies[] = entityreference
 dependencies[] = features
 dependencies[] = options
