@@ -1,7 +1,7 @@
 name = Groups
 description = Export Group Content type.
 core = 7.x
-package = PM
+package = Plus7
 version = 7.x-1.0
 dependencies[] = entityreference
 dependencies[] = features

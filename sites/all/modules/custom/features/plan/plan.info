@@ -1,7 +1,7 @@
 name = Plan
 description = Export Plan Content type.
 core = 7.x
-package = PM
+package = Plus7
 version = 7.x-1.0
 dependencies[] = date
 dependencies[] = date_popup
