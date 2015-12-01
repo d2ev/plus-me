@@ -10,27 +10,6 @@
 function taxonomy_events_field_default_field_bases() {
   $field_bases = array();
 
-  // Exported field_base: 'field_api_arguments'.
-  $field_bases['field_api_arguments'] = array(
-    'active' => 1,
-    'cardinality' => -1,
-    'deleted' => 0,
-    'entity_types' => array(),
-    'field_name' => 'field_api_arguments',
-    'indexes' => array(
-      'format' => array(
-        0 => 'format',
-      ),
-    ),
-    'locked' => 0,
-    'module' => 'text',
-    'settings' => array(
-      'max_length' => 255,
-    ),
-    'translatable' => 0,
-    'type' => 'text',
-  );
-
   // Exported field_base: 'field_api_headers'.
   $field_bases['field_api_headers'] = array(
     'active' => 1,
@@ -80,6 +59,25 @@ function taxonomy_events_field_default_field_bases() {
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_available_locations',
+    'indexes' => array(
+      'format' => array(
+        0 => 'format',
+      ),
+    ),
+    'locked' => 0,
+    'module' => 'text',
+    'settings' => array(),
+    'translatable' => 0,
+    'type' => 'text_long',
+  );
+
+  // Exported field_base: 'field_developer_config'.
+  $field_bases['field_developer_config'] = array(
+    'active' => 1,
+    'cardinality' => 1,
+    'deleted' => 0,
+    'entity_types' => array(),
+    'field_name' => 'field_developer_config',
     'indexes' => array(
       'format' => array(
         0 => 'format',
