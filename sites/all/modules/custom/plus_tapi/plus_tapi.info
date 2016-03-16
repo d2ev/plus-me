@@ -1,0 +1,11 @@
+name = Plus7 TAPI
+description = "Integrates with third party api based on ssl/curl."
+core = 7.x
+package = Plus7
+version = "7.x-1.0"
+
+dependencies[] = taxonomy_events
+
+files[] = plus_tapi.request.inc
+
+configure = admin/config/services/plus_tapi

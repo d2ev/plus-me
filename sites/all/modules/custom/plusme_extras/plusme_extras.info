@@ -1,0 +1,7 @@
+name = PlusME Extras
+description = "Common functions to have PlusME functionalities."
+core = 7.x
+package = Plus7
+version = "7.x-1.0"
+
+dependencies[] = plus1

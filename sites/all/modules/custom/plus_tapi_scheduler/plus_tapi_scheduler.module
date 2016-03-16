@@ -1,0 +1,48 @@
+<?php
+
+/**
+ * Implements hook_permission.
+ */
+function plus_tapi_scheduler_permission() {
+  return array(
+    'administer plus_tapi_scheduler' => array(
+      'title' => t('Administer Plus7 TAPI Scheduler'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu.
+ */
+function plus_tapi_scheduler_menu() {
+  $menu = array();
+
+  $menu['admin/config/system/plus_tapi_scheduler'] = array(
+    'title' => 'Plus7 TAPI Scheduler',
+    'description' => 'Plus7 TAPI scheduler and its configuration.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('plus_tapi_scheduler_config_form'),
+    'access arguments' => array('administer plus_tapi_scheduler'),
+    'file' => 'plus_tapi_scheduler.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $menu['admin/config/system/plus_tapi_scheduler/config'] = array(
+    'title' => 'Scheduler configuration',
+    'description' => 'Plus7 TAPI configuration.',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+
+  $menu['admin/config/system/plus_tapi_scheduler/events'] = array(
+    'title' => 'Plus7 TAPI Events',
+    'description' => 'Plus7 TAPI Events list.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('plus_tapi_scheduler_events_list'),
+    'access arguments' => array('administer plus_tapi_scheduler'),
+    'file' => 'plus_tapi_scheduler.admin.inc',
+    'type' => MENU_IS_LOCAL_TASK,
+  );
+
+  return $menu;
+}

@@ -1,0 +1,9 @@
+name = Plus7 TAPI Scheduler
+description = "Read the data for major cities for Plus7."
+core = 7.x
+package = Plus7
+version = "7.x-1.0"
+
+dependencies[] = plus_tapi
+
+configure = admin/config/system/plus_tapi_scheduler

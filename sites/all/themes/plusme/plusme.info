@@ -1,0 +1,28 @@
+name = PlusME
+description = Ultra lightweight Bootstrap theme for PlusME.
+core = 7.x
+base theme = bootstrap
+
+simplytest_dependencies[] = jquery_update
+
+settings[bootstrap_navbar_position] = 'fixed-top'
+settings[bootstrap_cdn] = 3.3.4
+
+stylesheets[all][] = common.less
+stylesheets[all][] = style.less
+
+scripts[] = TweenLite.min.js
+scripts[] = plusme.js
+
+regions[header] = Header
+regions[help] = Help
+regions[highlighted] = Highlighted
+regions[content] = Content
+regions[footer] = Footer
+
+; Information added by Drupal.org packaging script on 2016-03-11
+version = "7.x-1.0"
+core = "7.x"
+project = "plusme"
+datestamp = "1457676066"
+

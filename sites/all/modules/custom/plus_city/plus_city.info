@@ -1,0 +1,10 @@
+name = Plus7 City Management
+description = "Managing Cities"
+core = 7.x
+package = Plus7
+version = "7.x-1.0"
+
+
+files[] = plus_city.request.inc
+
+
