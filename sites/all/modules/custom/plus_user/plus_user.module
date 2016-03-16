@@ -1,0 +1,318 @@
+<?php
+/**
+ * @file
+ * Code for the PlusMe user management.
+ */
+
+/**
+ * Alter plan form to add post save operations.
+ * Field to invite friends outside system and show requested invites status.
+ *
+ * Implements hook_form_alter().
+ */
+function plus_user_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'plan_node_form') {
+    // Add post save operation actions.
+    array_push($form['#validate'], 'plus_user_plans_validate');
+    array_push($form['actions']['submit']['#submit'], 'plus_user_plans_submit');
+
+    // Field to invite friends.
+    $form['invitations_emails'] = array(
+      '#title' => t('New Invitations'),
+      '#type' => 'textarea',
+      '#description' => t('Comma separted list of email ids to whom invitations will send.'),
+      '#weight' => 15,
+    );
+
+    // Display requested invites.
+    if ($form['nid']['#value'] == NULL) {
+      return;
+    }
+
+    $req_user = $form['uid']['#value'];
+    $plan_nid = $form['nid']['#value'];
+    $rows = array();
+
+    $result = db_select('plus_user_invites', 'pui')
+      ->fields('pui')
+      ->condition('req_user', $req_user)
+      ->condition('plan_id', $plan_nid)
+      ->execute()
+      ->fetchAll();
+
+    foreach($result as $row) {
+      $rows[] = array($row->email, 'Pending');
+    }
+    $table = array(
+      'header' => array('Email', 'Status'),
+      'rows' => $rows,
+    );
+
+    $form['pending_requests'] = array(
+      '#markup' => "<div>Pending Requests</div>" . theme('table', $table),
+      '#weight' => 16,
+    );
+  }
+
+}
+
+/**
+ * Plan form post submit validation operation. It will validate invite emails.
+ * If email exist in system then user account will be linked.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function plus_user_plans_validate($form, &$form_state) {
+  $exist_user = $new_user = array();
+  $invite_emails = $form_state['values']['invitations_emails'];
+  $invite_emails = explode(',', $invite_emails);
+
+  // Filter out existing and new user by loading emails.
+  foreach($invite_emails as $email) {
+    if ($user = user_load_by_mail($email)) {
+      if ($user->status) {
+        $exist_user[] = $user->uid;
+      }
+      else {
+        $new_user[] = $email;
+      }
+    }
+    else {
+      $new_user[] = $email;
+    }
+  }
+
+  // New users operations will perform at save operation.
+  $form_state['values']['invitations_emails'] = implode(',', $new_user);
+
+  // For existing user attached them to friends field.
+  foreach($exist_user as $exist_user_id) {
+    foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
+      if (is_array($data)) {
+        if ($delta != 'add_more') {
+          if (empty($data['target_id']) && $data['target_id'] == NULL) {
+            $form_state['values']['field_friends'][LANGUAGE_NONE][$delta]['target_id'] = $exist_user_id;
+            $form_state['values']['field_friends'][LANGUAGE_NONE][$delta + 1] = array(
+              'target_id' => '',
+              '_weight' => $delta + 1,
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Plan post save operation. It will add all new users to user default friends
+ * group. For new emails create account and send them invites.
+ *
+ * @param $form
+ * @param $form_state
+ * @throws \Exception
+ */
+function plus_user_plans_submit(&$form, &$form_state) {
+  // Add friends to the user default group.
+  if (!empty($form_state['values']['field_friends'][LANGUAGE_NONE])) {
+    $req_user = $form_state['values']['uid'];
+    $req_user_default_grp = plus_user_get_default_group($req_user);
+    $grp_node = node_load($req_user_default_grp);
+
+    $existing_grp_members = array();
+    foreach($grp_node->field_group_users[LANGUAGE_NONE] as $delta => $data) {
+      $existing_grp_members[] = $data['target_id'];
+    }
+
+    foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
+      if ($delta != 'add_more' && !empty($data['target_id'])) {
+        $user_id = $data['target_id'];
+        if (!in_array($user_id, $existing_grp_members)) {
+          if (isset($grp_node->field_group_users[LANGUAGE_NONE])) {
+            $grp_node->field_group_users[LANGUAGE_NONE][count($grp_node->field_group_users[LANGUAGE_NONE])]['target_id'] = $user_id;
+          }
+          else {
+            $grp_node->field_group_users[LANGUAGE_NONE][0]['target_id'] = $user_id;
+          }
+        }
+      }
+    }
+    field_attach_update('node', $grp_node);
+  }
+
+  // News emails, create account and for sending invites rule is used.
+  $emails = $form_state['values']['invitations_emails'];
+  if (empty($emails) || $emails == NULL) {
+    return;
+  }
+
+  $emails = explode(',', $emails);
+  $node = $form_state['node'];
+  if (!$node) return;
+  foreach($emails as $email) {
+    $user = user_load_by_mail($email);
+    if ($user) {
+      // Blocked user.
+      $res_user = $user->uid;
+    }
+    else {
+      // New user.
+      $new_user = array(
+        'name' => $email,
+        'pass' => rand(5, 15),
+        'mail' => $email,
+        'status' => 0,
+        'init' => $email,
+        'roles' => array(
+          DRUPAL_AUTHENTICATED_RID => 'authenticated user',
+        ),
+      );
+      $new_user = user_save('', $new_user);
+      $res_user = $new_user->uid;
+    }
+
+    $data = array(
+      'req_user' => $node->uid,
+      'res_user' => $res_user,
+      'group_id' => plus_user_get_default_group($node->uid),
+      'plan_id' => $node->nid,
+      'token' => md5(uniqid(rand(), true)),
+      'email' => $email,
+    );
+    drupal_write_record('plus_user_invites', $data);
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function plus_user_permission() {
+  return array(
+    'administer default group' => array(
+      'title' => t('Administer default group'),
+      'description' => t('Perform administration tasks to default group.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_access().
+ */
+function plus_user_node_access($node, $op, $account) {
+  $type = is_string($node) ? $node : $node->type;
+
+  if ($type == 'group' && $op == 'update') {
+    if (!user_access('administer default group', $account) &&
+      $account->uid == $node->uid
+    ) {
+      return NODE_ACCESS_DENY;
+    }
+  }
+
+  return NODE_ACCESS_IGNORE;
+}
+
+/**
+ * Helper function to get user default group from user id.
+ *
+ * @param $user_id
+ *  User id.
+ *
+ * @return int
+ *  Return group node id.
+ */
+function plus_user_get_default_group($user_id) {
+  $result = db_select('node', 'n')
+    ->Fields('n',array('nid'))
+    ->condition('status', 1)
+    ->condition('type', 'group')
+    ->condition('uid', $user_id)
+    ->condition('title', 'My Friends')
+    ->execute()
+    ->fetchObject();
+
+  if ($result) {
+    return $result->nid;
+  }
+  else {
+    return 0;
+  }
+}
+
+/**
+ * Helper function to get pending invites present in plan.
+ *
+ * @param $plan_node
+ *  Plan node object
+ *
+ * @return array
+ *  Return array of invites emails.
+ */
+function plus_user_get_pending_emails($plan_node) {
+  $plan_nid = $plan_node->nid;
+  $plan_uid = $plan_node->uid;
+  $emails = array();
+
+  $result = db_select('plus_user_invites', 'pui')
+    ->fields('pui')
+    ->condition('req_user', $plan_uid)
+    ->condition('plan_id', $plan_nid)
+    ->execute()
+    ->fetchAll();
+
+  foreach($result as $row) {
+    $emails[] = $row->email;
+  }
+
+  return $emails;
+}
+
+/**
+ * Implements hook_user_login()
+ */
+function plus_user_user_login(&$edit, $account) {
+  $email = $account->mail;
+  $res_user = $account->uid;
+
+  // Check user is in request pending list for any plans.
+  $result = db_select('plus_user_invites', 'pui')
+    ->fields('pui')
+    ->condition('res_user', $res_user)
+    ->condition('email', $email)
+    ->execute()
+    ->fetchAll();
+
+  // Go through each request and perform below operations.
+  // 1. Update the plan node invites field.
+  // 2. Update the requested user default group.
+  foreach($result as $row) {
+    $req_user = $row->req_user;
+    $plan_nid = $row->plan_id;
+    $req_user_default_grp = plus_user_get_default_group($req_user);
+
+    // Update plan node.
+    $node = node_load($plan_nid);
+    if (isset($node->field_friends[LANGUAGE_NONE])) {
+      $node->field_friends[LANGUAGE_NONE][count($node->field_friends[LANGUAGE_NONE])]['target_id'] = $res_user;
+    }
+    else {
+      $node->field_friends[LANGUAGE_NONE][0]['target_id'] = $res_user;
+    }
+    field_attach_update('node', $node);
+
+    // Update the requested user default group.
+    $grp_node = node_load($req_user_default_grp);
+    if (isset($grp_node->field_friends[LANGUAGE_NONE])) {
+      $grp_node->field_group_users[LANGUAGE_NONE][count($grp_node->field_group_users[LANGUAGE_NONE])]['target_id'] = $res_user;
+    }
+    else {
+      $grp_node->field_group_users[LANGUAGE_NONE][0]['target_id'] = $res_user;
+    }
+    field_attach_update('node', $grp_node);
+
+    // Delete the entry from pending list
+    db_delete('plus_user_invites')
+      ->condition('rid', $row->rid)
+      ->execute();
+  }
+}

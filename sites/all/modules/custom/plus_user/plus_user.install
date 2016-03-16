@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Schema to store requested invites.
+ *
+ * Implements hook_schema().
+ */
+
+function plus_user_schema() {
+  $schema['plus_user_invites'] = array(
+    'description' => 'Table to store requested invites.',
+    'fields' => array(
+      'rid' => array(
+        'description' => 'The primary identifier for request.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'req_user' => array(
+        'description' => 'User Who sent the request.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'res_user' => array(
+        'description' => 'User to whom request is sent.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'group_id' => array(
+        'description' => 'Group id associated with invite.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'plan_id' => array(
+        'description' => 'Plan id associated with invite.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'token' => array(
+        'description' => 'md5 genereated token send to user.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'email' => array(
+        'description' => 'Email of requested user.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('rid'),
+  );
+  return $schema;
+}
