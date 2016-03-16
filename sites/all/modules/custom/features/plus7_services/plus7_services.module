@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the Plus7 Services feature.
- */
-
-include_once 'plus7_services.features.inc';
