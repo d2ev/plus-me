@@ -120,10 +120,12 @@ function plus_user_plans_submit(&$form, &$form_state) {
     $grp_node = node_load($req_user_default_grp);
 
     $existing_grp_members = array();
-    foreach($grp_node->field_group_users[LANGUAGE_NONE] as $delta => $data) {
-      $existing_grp_members[] = $data['target_id'];
+    if (!empty($grp_node->field_group_users[LANGUAGE_NONE])) {
+      foreach($grp_node->field_group_users[LANGUAGE_NONE] as $delta => $data) {
+        $existing_grp_members[] = $data['target_id'];
+      }
     }
-
+    
     foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
       if ($delta != 'add_more' && !empty($data['target_id'])) {
         $user_id = $data['target_id'];
