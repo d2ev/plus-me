@@ -131,7 +131,7 @@ function plus_user_plans_submit(&$form, &$form_state) {
     }
 
     foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
-      if ($delta != 'add_more' && !empty($data['target_id'])) {
+      if (is_array($data) && !empty($data['target_id'])) {
         $user_id = $data['target_id'];
         if (!in_array($user_id, $existing_grp_members)) {
           if (isset($grp_node->field_group_users[LANGUAGE_NONE])) {
@@ -143,6 +143,7 @@ function plus_user_plans_submit(&$form, &$form_state) {
         }
       }
     }
+
     field_attach_update('node', $grp_node);
   }
 
@@ -215,7 +216,78 @@ function plus_user_node_access($node, $op, $account) {
     }
   }
 
+  if ($type == 'plan' && $op == 'view') {
+    $login_user_id = $account->uid;
+    // Check logged in user present in $node as
+    // author, groups and friends list.
+    if (!user_access('administer nodes', $account) &&
+      !plus_user_present_in_plan($node, $login_user_id)
+    ) {
+      return NODE_ACCESS_DENY;
+    }
+  }
+
   return NODE_ACCESS_IGNORE;
+}
+
+/**
+ * Helper function to know whether user belongs to plan or not.
+ *
+ * @param $node
+ *  Plan node to check.
+ * @param $user_id
+ *  User id to check.
+ *
+ * @return bool
+ *  Return TRUE if User is belongs to plan else FALSE.
+ */
+function plus_user_present_in_plan($node, $user_id) {
+  if ($node) {
+    // Check for author.
+    if (in_array($node->nid, plus_user_get_plans($user_id))) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Helper function to get list of plans user belongs to.
+ *
+ * @param $user_id
+ *   User id whom plans to be fetched.
+ *
+ * @return array
+ *  Returns list of plan nodes the user blongs to.
+ */
+function plus_user_get_plans($user_id) {
+  $plans = array();
+  $result = db_query("SELECT n.nid FROM node n
+LEFT JOIN field_data_field_groups g ON n.nid = g.entity_id
+LEFT JOIN field_data_field_group_users gu ON g.field_groups_target_id = gu.entity_id
+LEFT JOIN field_data_field_friends f ON n.nid = f.entity_id
+WHERE n.status=1 AND n.type='plan'
+AND (n.uid=:uid OR gu.field_group_users_target_id =:uid OR f.field_friends_target_id =:uid) GROUP by n.nid", array(':uid' => $user_id))->fetchAll();
+  foreach($result as $row) {
+    $plans[] = $row->nid;
+  }
+
+  return $plans;
+}
+
+/**
+ * Helper function that is userd in views contextual filter. It will fetch
+ * current user plans he blongs to.
+ *
+ * @return string
+ *  Returns plan nodes imploded with +.
+ */
+function plus_user_plans_views_contextual_filter() {
+  global $user;
+  $user_id = $user->uid;
+  $plans = plus_user_get_plans($user_id);
+
+  return implode('+', $plans);
 }
 
 /**
