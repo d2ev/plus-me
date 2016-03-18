@@ -43,6 +43,9 @@ function plus_user_form_alter(&$form, &$form_state, $form_id) {
     foreach($result as $row) {
       $rows[] = array($row->email, 'Pending');
     }
+    if (empty($rows)) {
+      return;
+    }
     $table = array(
       'header' => array('Email', 'Status'),
       'rows' => $rows,
@@ -88,9 +91,9 @@ function plus_user_plans_validate($form, &$form_state) {
 
   // For existing user attached them to friends field.
   foreach($exist_user as $exist_user_id) {
-    foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
-      if (is_array($data)) {
-        if ($delta != 'add_more') {
+    if (!empty($form_state['values']['field_friends'][LANGUAGE_NONE])) {
+      foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
+        if (is_array($data)) {
           if (empty($data['target_id']) && $data['target_id'] == NULL) {
             $form_state['values']['field_friends'][LANGUAGE_NONE][$delta]['target_id'] = $exist_user_id;
             $form_state['values']['field_friends'][LANGUAGE_NONE][$delta + 1] = array(
@@ -101,6 +104,7 @@ function plus_user_plans_validate($form, &$form_state) {
         }
       }
     }
+
   }
 }
 
@@ -125,7 +129,7 @@ function plus_user_plans_submit(&$form, &$form_state) {
         $existing_grp_members[] = $data['target_id'];
       }
     }
-    
+
     foreach($form_state['values']['field_friends'][LANGUAGE_NONE] as $delta => $data) {
       if ($delta != 'add_more' && !empty($data['target_id'])) {
         $user_id = $data['target_id'];
