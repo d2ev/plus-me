@@ -210,7 +210,8 @@ function plus_user_node_access($node, $op, $account) {
 
   if ($type == 'group' && $op == 'update') {
     if (!user_access('administer default group', $account) &&
-      $account->uid == $node->uid
+      $account->uid == $node->uid &&
+      $node->title == 'My Friends'
     ) {
       return NODE_ACCESS_DENY;
     }
