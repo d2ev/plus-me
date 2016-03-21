@@ -19,18 +19,6 @@ function plusme_html_head_alter(&$head_elements) {
 function plusme_preprocess_page(&$vars) {
   $vars['header_attributes'] = '';
   $page = &$vars['page'];
-
-  // Changing user actions page titles.
-  if (arg(0) == 'user') {
-    switch (arg(1)) {
-      case 'register':
-      case 'password':
-      case '':
-      case 'login':
-        drupal_set_title(t('PlusME'));
-        break;
-    }
-  }
 }
 
 /**
@@ -41,6 +29,18 @@ function plusme_process_page(&$vars) {
 
   if ($vars['is_front'] && !$vars['title']) {
     $vars['title'] = $vars['site_name'];
+  }
+
+  // Changing user actions page titles.
+  if (arg(0) == 'user') {
+    switch (arg(1)) {
+      case 'register':
+      case 'password':
+      case '':
+      case 'login':
+        $vars['title'] = 'PlusME';
+        break;
+    }
   }
 }
 
