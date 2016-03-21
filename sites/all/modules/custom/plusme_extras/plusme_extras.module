@@ -137,6 +137,11 @@ function plusme_extras_attendees($nid) {
 
   foreach ($attendees as $attendee) {
     $attendee_obj = user_load($attendee);
+    if (empty($attendee_obj->field_full_name)) {
+      $friend_name = $attendee_obj->name;
+    } else {
+      $friend_name = $attendee_obj->field_full_name[LANGUAGE_NONE][0]['value'];
+    }
     $plusme_status = 'No';
     $timestamp = '--';
     $query = db_select('votingapi_vote', 'v')
@@ -151,7 +156,7 @@ function plusme_extras_attendees($nid) {
     }
 
     $table['rows'][] = array(
-      $attendee_obj->field_full_name[LANGUAGE_NONE][0]['value'],
+      $friend_name,
       $plusme_status,
       $timestamp,
     );
