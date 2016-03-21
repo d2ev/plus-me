@@ -32,6 +32,16 @@ function plusme_extras_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function plusme_extras_menu_alter(&$items) {
+  $items['user/login']['title'] = 'Sign in';
+  $items['user/register']['title'] = 'Sign up';
+  $items['user/password']['title'] = 'Reset password';
+  $items['user/password']['weight'] = 10;
+}
+
+/**
  * Performs user access check to plan node.
  *
  * @param $nid
@@ -197,4 +207,3 @@ function plusme_extras_node_insert($node) {
     }
   }
 }
-

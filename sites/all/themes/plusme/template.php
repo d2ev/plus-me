@@ -19,6 +19,18 @@ function plusme_html_head_alter(&$head_elements) {
 function plusme_preprocess_page(&$vars) {
   $vars['header_attributes'] = '';
   $page = &$vars['page'];
+
+  // Changing user actions page titles.
+  if (arg(0) == 'user') {
+    switch (arg(1)) {
+      case 'register':
+      case 'password':
+      case '':
+      case 'login':
+        drupal_set_title(t('PlusME'));
+        break;
+    }
+  }
 }
 
 /**
