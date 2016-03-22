@@ -395,3 +395,16 @@ function plus_user_user_login(&$edit, $account) {
       ->execute();
   }
 }
+
+/**
+ * Implements hook_node_view_alter().
+ */
+function plus_user_node_view_alter(&$build) {
+  if ($build['#view_mode'] == 'full' && $build['#node']->type == 'plan') {
+    $restaurant_tid =  $build['field_cities']['#items'][0]['tid'];
+    $restaurant = taxonomy_term_load($restaurant_tid);
+    $restaurant_address = $restaurant->description;
+    $build['field_cities'][0]['#lineage'][1]['#markup'] = implode('<span class="hierarchical-select-item-separator">›</span>',
+      array($build['field_cities'][0]['#lineage'][1]['#markup'], $restaurant_address));
+  }
+}
