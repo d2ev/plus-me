@@ -288,6 +288,9 @@ function plus_user_plans_views_contextual_filter() {
   $user_id = $user->uid;
   $plans = plus_user_get_plans($user_id);
 
+  if (empty($plans)) {
+    return 0;
+  }
   return implode('+', $plans);
 }
 
