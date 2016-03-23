@@ -11,6 +11,7 @@ settings[bootstrap_cdn] = 3.3.4
 stylesheets[all][] = common.less
 stylesheets[all][] = style.less
 
+scripts[] = jquery.cookie.js
 scripts[] = tweme.js
 
 regions[body_top] = Body top
